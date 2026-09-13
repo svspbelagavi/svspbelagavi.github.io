@@ -18,7 +18,6 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
   const [isTouch, setIsTouch] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Detect touch / coarse-pointer devices so we don't rely on hover for them.
   useEffect(() => {
     const mq = window.matchMedia("(hover: none), (pointer: coarse)")
     const update = () => setIsTouch(mq.matches)
@@ -55,8 +54,6 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
 
   const handleCardClick = () => {
     if (isTouch) {
-      // No hover on touch — first tap reveals the preview,
-      // a second tap (or the "Open Maps" button) navigates.
       if (!isExpanded) {
         setIsExpanded(true)
         setIsHovered(true)
@@ -95,7 +92,6 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
           aspectRatio: isExpanded ? "560 / 340" : "500 / 220",
         }}
       >
-        {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-muted/20 via-transparent to-muted/40" />
 
         <AnimatePresence>
@@ -205,7 +201,6 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
           )}
         </AnimatePresence>
 
-        {/* Grid pattern - only show when collapsed */}
         <motion.div
           className="absolute inset-0 opacity-[0.03]"
           animate={{ opacity: isExpanded ? 0 : 0.03 }}
@@ -221,9 +216,7 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
           </svg>
         </motion.div>
 
-        {/* Content */}
         <div className="relative z-10 h-full flex flex-col justify-between p-3 sm:p-5">
-          {/* Top section */}
           <div className="flex items-start justify-between">
             <motion.div
               className="relative"
@@ -262,7 +255,6 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
             </motion.div>
           </div>
 
-          {/* Bottom section */}
           <div className="space-y-1 pr-24 sm:pr-28">
             <motion.h3
               className="text-foreground font-medium text-xs sm:text-sm tracking-tight truncate"
@@ -292,5 +284,17 @@ export function LocationMap({ location = "Belagavi, Karnataka", className }: Loc
         </div>
       </motion.div>
 
-      {/* Click hint - desktop only */}
       {!isTouch && (
+        <motion.p
+          className="absolute -bottom-6 left-1/2 text-[10px] text-muted-foreground whitespace-nowrap"
+          style={{ x: "-50%" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered && !isExpanded ? 1 : 0, y: isHovered ? 0 : 4 }}
+          transition={{ duration: 0.2 }}
+        >
+          Click to expand
+        </motion.p>
+      )}
+    </motion.div>
+  )
+}
