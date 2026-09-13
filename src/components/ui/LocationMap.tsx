@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "motion/react"
 
 interface LocationMapProps {
@@ -10,13 +9,23 @@ interface LocationMapProps {
   className?: string
 }
 
-export function LocationMap({
-  location = "Belagavi, Karnataka",
-  className,
-}: LocationMapProps) {
+const MAPS_URL =
+  "https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/@15.8716523,74.5192759,16z/data=!3m1!4b1!4m6!3m5!1s0x3bbf66b35827e297:0xa6009675858bc620!8m2!3d15.8716523!4d74.5192759!16s%2Fg%2F11crzr1t8s?entry=ttu&g_ep=EgoyMDI2MDcxOS4wIKXMDSoASAFQAw%3D%3D"
+
+export function LocationMap({ location = "Belagavi, Karnataka", className }: LocationMapProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isTouch, setIsTouch] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Detect touch / coarse-pointer devices so we don't rely on hover for them.
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: none), (pointer: coarse)")
+    const update = () => setIsTouch(mq.matches)
+    update()
+    mq.addEventListener("change", update)
+    return () => mq.removeEventListener("change", update)
+  }, [])
 
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
@@ -28,7 +37,7 @@ export function LocationMap({
   const springRotateY = useSpring(rotateY, { stiffness: 300, damping: 30 })
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return
+    if (isTouch || !containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const centerX = rect.left + rect.width / 2
     const centerY = rect.top + rect.height / 2
@@ -42,46 +51,48 @@ export function LocationMap({
     setIsHovered(false)
   }
 
- const handleClick = () => {
-  window.open(
-   "https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/@15.8716523,74.516701,17z/data=!3m1!4b1!4m6!3m5!1s0x3bbf66b35827e297:0xa6009675858bc620!8m2!3d15.8716523!4d74.5192759!16s%2Fg%2F11crzr1t8s?entry=ttu&g_ep=EgoyMDI2MDcwOC4wIKXMDSoASAFQAw%3D%3D",                                          
-   "_blank"
-  );
-};
+  const openMaps = () => window.open(MAPS_URL, "_blank", "noopener,noreferrer")
+
+  const handleCardClick = () => {
+    if (isTouch) {
+      // No hover on touch — first tap reveals the preview,
+      // a second tap (or the "Open Maps" button) navigates.
+      if (!isExpanded) {
+        setIsExpanded(true)
+        setIsHovered(true)
+        return
+      }
+      openMaps()
+      return
+    }
+    openMaps()
+  }
 
   return (
     <motion.div
       ref={containerRef}
-      className={`relative cursor-pointer select-none ${className}`}
-      style={{
-        perspective: 1000,
-      }}
+      className={`relative cursor-pointer select-none w-full max-w-[500px] mx-auto ${className ?? ""}`}
+      style={{ perspective: 1000 }}
+      onMouseMove={handleMouseMove}
       onMouseEnter={() => {
-  setIsHovered(true);
-  setIsExpanded(true);
-}}
-
-onMouseLeave={() => {
-  handleMouseLeave();
-  setIsExpanded(false);
-}}
-onClick={handleClick}
+        if (isTouch) return
+        setIsHovered(true)
+        setIsExpanded(true)
+      }}
+      onMouseLeave={() => {
+        if (isTouch) return
+        handleMouseLeave()
+        setIsExpanded(false)
+      }}
+      onClick={handleCardClick}
     >
       <motion.div
-        className="relative overflow-hidden rounded-2xl bg-background border border-border"
+        className="relative w-full overflow-hidden rounded-2xl bg-background border border-border transition-[aspect-ratio] duration-500 ease-out"
         style={{
-          rotateX: springRotateX,
-          rotateY: springRotateY,
+          rotateX: isTouch ? 0 : springRotateX,
+          rotateY: isTouch ? 0 : springRotateY,
           transformStyle: "preserve-3d",
-        }}
-        animate={{
-          width: isExpanded ? 560 : 500,
-          height: isExpanded ? 340 : 220,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 400,
-          damping: 35,
+          aspectRatio: isExpanded ? "560 / 340" : "500 / 220",
         }}
       >
         {/* Subtle gradient overlay */}
@@ -99,135 +110,89 @@ onClick={handleClick}
               <div className="absolute inset-0 bg-muted" />
 
               <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                {/* Main roads - using foreground with opacity */}
                 <motion.line
-                  x1="0%"
-                  y1="35%"
-                  x2="100%"
-                  y2="35%"
-                  className="stroke-foreground/25"
-                  strokeWidth="4"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
+                  x1="0%" y1="35%" x2="100%" y2="35%"
+                  className="stroke-foreground/25" strokeWidth="4"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 />
                 <motion.line
-                  x1="0%"
-                  y1="65%"
-                  x2="100%"
-                  y2="65%"
-                  className="stroke-foreground/25"
-                  strokeWidth="4"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
+                  x1="0%" y1="65%" x2="100%" y2="65%"
+                  className="stroke-foreground/25" strokeWidth="4"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.8, delay: 0.3 }}
                 />
-
-                {/* Vertical main roads */}
                 <motion.line
-                  x1="30%"
-                  y1="0%"
-                  x2="30%"
-                  y2="100%"
-                  className="stroke-foreground/20"
-                  strokeWidth="3"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
+                  x1="30%" y1="0%" x2="30%" y2="100%"
+                  className="stroke-foreground/20" strokeWidth="3"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                 />
                 <motion.line
-                  x1="70%"
-                  y1="0%"
-                  x2="70%"
-                  y2="100%"
-                  className="stroke-foreground/20"
-                  strokeWidth="3"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
+                  x1="70%" y1="0%" x2="70%" y2="100%"
+                  className="stroke-foreground/20" strokeWidth="3"
+                  initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
                 />
-
-                {/* Secondary streets */}
                 {[20, 50, 80].map((y, i) => (
                   <motion.line
                     key={`h-${i}`}
-                    x1="0%"
-                    y1={`${y}%`}
-                    x2="100%"
-                    y2={`${y}%`}
-                    className="stroke-foreground/10"
-                    strokeWidth="1.5"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
+                    x1="0%" y1={`${y}%`} x2="100%" y2={`${y}%`}
+                    className="stroke-foreground/10" strokeWidth="1.5"
+                    initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                     transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
                   />
                 ))}
                 {[15, 45, 55, 85].map((x, i) => (
                   <motion.line
                     key={`v-${i}`}
-                    x1={`${x}%`}
-                    y1="0%"
-                    x2={`${x}%`}
-                    y2="100%"
-                    className="stroke-foreground/10"
-                    strokeWidth="1.5"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
+                    x1={`${x}%`} y1="0%" x2={`${x}%`} y2="100%"
+                    className="stroke-foreground/10" strokeWidth="1.5"
+                    initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                     transition={{ duration: 0.5, delay: 0.7 + i * 0.1 }}
                   />
                 ))}
               </svg>
 
-              {/* Buildings - using muted-foreground */}
               <motion.div
                 className="absolute top-[40%] left-[10%] w-[15%] h-[20%] rounded-sm bg-muted-foreground/30 border border-muted-foreground/20"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.5 }}
               />
               <motion.div
                 className="absolute top-[15%] left-[35%] w-[12%] h-[15%] rounded-sm bg-muted-foreground/25 border border-muted-foreground/15"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.6 }}
               />
               <motion.div
                 className="absolute top-[70%] left-[75%] w-[18%] h-[18%] rounded-sm bg-muted-foreground/28 border border-muted-foreground/18"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.7 }}
               />
               <motion.div
                 className="absolute top-[20%] right-[10%] w-[10%] h-[25%] rounded-sm bg-muted-foreground/22 border border-muted-foreground/15"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.55 }}
               />
               <motion.div
                 className="absolute top-[55%] left-[5%] w-[8%] h-[12%] rounded-sm bg-muted-foreground/20 border border-muted-foreground/12"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.65 }}
               />
               <motion.div
                 className="absolute top-[8%] left-[75%] w-[14%] h-[10%] rounded-sm bg-muted-foreground/22 border border-muted-foreground/15"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.75 }}
               />
 
               <motion.div
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                initial={{ scale: 0, y: -20 }}
-                animate={{ scale: 1, y: 0 }}
+                initial={{ scale: 0, y: -20 }} animate={{ scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.3 }}
               >
                 <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="drop-shadow-lg"
+                  width="32" height="32" viewBox="0 0 24 24" fill="none"
+                  className="drop-shadow-lg w-6 h-6 sm:w-8 sm:h-8"
                   style={{ filter: "drop-shadow(0 0 10px rgba(52, 211, 153, 0.5))" }}
                 >
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#34D399" />
@@ -257,43 +222,31 @@ onClick={handleClick}
         </motion.div>
 
         {/* Content */}
-        <div className="relative z-10 h-full flex flex-col justify-between p-5">
+        <div className="relative z-10 h-full flex flex-col justify-between p-3 sm:p-5">
           {/* Top section */}
           <div className="flex items-start justify-between">
-            <div className="relative">
-              <motion.div
-                className="relative"
+            <motion.div
+              className="relative"
+              animate={{ opacity: isExpanded ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.svg
+                width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                className="text-emerald-400 w-4 h-4 sm:w-[18px] sm:h-[18px]"
                 animate={{
-                  opacity: isExpanded ? 0 : 1,
+                  filter: isHovered
+                    ? "drop-shadow(0 0 8px rgba(52, 211, 153, 0.6))"
+                    : "drop-shadow(0 0 4px rgba(52, 211, 153, 0.3))",
                 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Map Icon SVG */}
-                <motion.svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-emerald-400"
-                  animate={{
-                    filter: isHovered
-                      ? "drop-shadow(0 0 8px rgba(52, 211, 153, 0.6))"
-                      : "drop-shadow(0 0 4px rgba(52, 211, 153, 0.3))",
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                  <line x1="9" x2="9" y1="3" y2="18" />
-                  <line x1="15" x2="15" y1="6" y2="21" />
-                </motion.svg>
-              </motion.div>
-            </div>
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" x2="9" y1="3" y2="18" />
+                <line x1="15" x2="15" y1="6" y2="21" />
+              </motion.svg>
+            </motion.div>
 
-            {/* Status indicator */}
             <motion.div
               className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-foreground/5 backdrop-blur-sm"
               animate={{
@@ -303,62 +256,41 @@ onClick={handleClick}
               transition={{ duration: 0.2 }}
             >
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span className="text-[10px] font-medium text-muted-foreground tracking-wide uppercase">Live</span>
+              <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground tracking-wide uppercase">
+                Live
+              </span>
             </motion.div>
           </div>
 
           {/* Bottom section */}
-          <div className="space-y-1">
+          <div className="space-y-1 pr-24 sm:pr-28">
             <motion.h3
-              className="text-foreground font-medium text-sm tracking-tight"
-              animate={{
-                x: isHovered ? 4 : 0,
-              }}
+              className="text-foreground font-medium text-xs sm:text-sm tracking-tight truncate"
+              animate={{ x: isHovered ? 4 : 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
               {location}
             </motion.h3>
 
-            <button
-  onClick={(e) => {
-    e.stopPropagation();
-    window.open(
-      "https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/@15.8716523,74.5192759,16z/data=!3m1!4b1!4m6!3m5!1s0x3bbf66b35827e297:0xa6009675858bc620!8m2!3d15.8716523!4d74.5192759!16s%2Fg%2F11crzr1t8s?entry=ttu&g_ep=EgoyMDI2MDcxOS4wIKXMDSoASAFQAw%3D%3D",
-      "_blank"
-    );
-  }}
-  className="absolute bottom-4 right-4 px-4 py-2 rounded-lg bg-amber-500 text-black font-semibold z-50"
->
-  Open Maps
-</button>
-
-            {/* Animated underline */}
             <motion.div
               className="h-px bg-gradient-to-r from-emerald-500/50 via-emerald-400/30 to-transparent"
               initial={{ scaleX: 0, originX: 0 }}
-              animate={{
-                scaleX: isHovered || isExpanded ? 1 : 0.3,
-              }}
+              animate={{ scaleX: isHovered || isExpanded ? 1 : 0.3 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
-        </div>
 
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              openMaps()
+            }}
+            className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-amber-500 text-black font-semibold text-xs sm:text-sm z-50 whitespace-nowrap"
+          >
+            Open Maps
+          </button>
+        </div>
       </motion.div>
 
-      {/* Click hint */}
-      <motion.p
-        className="absolute -bottom-6 left-1/2 text-[10px] text-muted-foreground whitespace-nowrap"
-        style={{ x: "-50%" }}
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: isHovered && !isExpanded ? 1 : 0,
-          y: isHovered ? 0 : 4,
-        }}
-        transition={{ duration: 0.2 }}
-      >
-        Click to expand
-      </motion.p>
-    </motion.div>
-  )
-}
+      {/* Click hint - desktop only */}
+      {!isTouch && (
