@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Mission from './components/Mission';
@@ -11,27 +11,13 @@ import FacilitiesAndHealthcare from './components/FacilitiesAndHealthcare';
 import Newsletter from './components/Newsletter';
 import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
-import FacebookFeed from './components/FacebookFeed';
-import KeyDonors from './components/KeyDonors';
+import AdoptModal from './components/AdoptModal';
 import { Lang } from './types';
+import FacebookFeed from './components/FacebookFeed';
+import Aurora from './components/ui/Aurora';
 import { CustomCursor } from './components/ui/CustomCursor';
 import FadeInSection from './components/ui/FadeInSection';
-import { useDocumentMeta } from './hooks/useDocumentMeta';
-
-/* ──────────────────────────────────────────────────────────────────────
-   Lazy-loaded heavy chunks
-   ──────────────────────────────────────────────────────────────────────
-   These three modules together were ~250KB of eagerly-loaded JS that most
-   users never interact with on a typical visit. They are now split into
-   separate chunks and only fetched when actually needed:
-
-   - AdoptModal:  Multi-step form + PhoneInput + country/state data +
-                  BouncingDots. Only loaded when the user opens the modal.
-   - Aurora:      WebGL shader background (OGL + @paper-design/shaders).
-                  Only loaded on desktop + dark theme + no reduced-motion.
-   ────────────────────────────────────────────────────────────────────── */
-const AdoptModal = lazy(() => import('./components/AdoptModal'));
-const Aurora = lazy(() => import('./components/ui/Aurora'));
+import KeyDonors from "./components/KeyDonors";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>('EN');
@@ -150,10 +136,6 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScrollDetect);
   }, []);
 
-  // Keep <title>, meta description, and <html lang> in sync with the active
-  // section + selected UI language. See src/hooks/useDocumentMeta.ts.
-  useDocumentMeta(activeSection, lang);
-
   return (
     <div className="font-sans text-text-primary bg-transparent selection:bg-amber-800 selection:text-white min-h-screen flex flex-col justify-between">
       {/* Skip to main content — accessibility (WCAG 2.4.1) */}
@@ -173,21 +155,18 @@ export default function App() {
         />
       </div>
 
-      {/* Immersive Global Animated Aurora Background Canvas — desktop + reduced-motion OK only.
-          Lazy-loaded so OGL doesn't end up in the main bundle. */}
+      {/* Immersive Global Animated Aurora Background Canvas — desktop + reduced-motion OK only */}
       {theme === 'dark' && showAurora && (
-        <Suspense fallback={null}>
-          <div
-            className="fixed inset-0 pointer-events-none -z-50 overflow-hidden opacity-35 select-none transition-opacity duration-500"
-            aria-hidden="true"
-          >
-            <Aurora
-              colorStops={["#EAB308", "#10B981", "#F97316"]}
-              amplitude={1}
-              blend={0.46}
-            />
-          </div>
-        </Suspense>
+        <div
+          className="fixed inset-0 pointer-events-none -z-50 overflow-hidden opacity-35 select-none transition-opacity duration-500"
+          aria-hidden="true"
+        >
+          <Aurora
+            colorStops={["#EAB308", "#10B981", "#F97316"]}
+            amplitude={1}
+            blend={0.46}
+          />
+        </div>
       )}
 
       {/* Ambient Aesthetic Floating Orbs (decorative — hidden from AT) */}
@@ -298,19 +277,13 @@ export default function App() {
         onDonateClick={() => triggerDonate()}
       />
 
-      {/* Fully styled pre-registration CARA adoption modal.
-          Only rendered (and only the chunk is fetched) when the user
-          actually opens it. */}
-      {isAdoptOpen && (
-        <Suspense fallback={null}>
-          <AdoptModal
-            isOpen={isAdoptOpen}
-            onClose={() => setIsAdoptOpen(false)}
-            lang={lang}
-            onScroll={handleOverlayScroll}
-          />
-        </Suspense>
-      )}
+      {/* Fully styled pre-registration CARA adoption modal */}
+      <AdoptModal
+        isOpen={isAdoptOpen}
+        onClose={() => setIsAdoptOpen(false)}
+        lang={lang}
+        onScroll={handleOverlayScroll}
+      />
     </div>
   );
 }

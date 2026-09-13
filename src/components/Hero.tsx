@@ -13,25 +13,19 @@ interface HeroProps {
 export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
   const t = (key: string) => TRANSLATIONS[key]?.[lang] || key;
 
-  // Each word of the headline is wrapped in a <motion.span> purely for the
-  // gold-glow hover micro-interaction. That decoration is hidden from screen
-  // readers (aria-hidden on the parent), and the same headline text is also
-  // exposed as a single plain string via the visually-hidden `<h1>` below.
-  // Why: wrapping each word in a focusable/announcable node produced 30+
-  // AT announcements per page load, with no semantic value.
   const renderInteractiveText = (text: string) => {
     const words = text.split(' ');
     return (
-      <span className="inline-block" aria-hidden="true">
+      <span className="inline-block">
         {words.map((word, index) => (
           <motion.span
             key={index}
-            className="inline-block mr-[0.25em] last:mr-0 cursor-default select-none"
+            className="inline-block mr-[0.25em] last:mr-0 cursor-default select-none transition-colors duration-150"
             style={{
-              color: 'rgb(243, 244, 246)',
+              color: 'rgb(243, 244, 246)', // gray-100 / white
             }}
             whileHover={{
-              color: '#fbbf24',
+              color: '#fbbf24', // Amber/Yellow
               textShadow: '0 0 12px rgba(251, 191, 36, 0.5)',
             }}
             transition={{
@@ -51,10 +45,9 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
     <section
       id="hero"
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-950 dark:bg-transparent text-white"
-      aria-labelledby="hero-header-title"
     >
-      {/* PREMIUM RIGHT SIDE MOVING LINES — decorative, hidden from AT */}
-      <div className="premium-right-lines" id="hero-premium-lines" aria-hidden="true">
+      {/* PREMIUM RIGHT SIDE MOVING LINES */}
+      <div className="premium-right-lines" id="hero-premium-lines">
         <svg
           className="premium-lines-svg"
           viewBox="0 0 1920 1080"
@@ -89,22 +82,82 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
             "
           />
         </svg>
+
+        <style>{`
+          /* LINES CONTAINER */
+          .premium-right-lines {
+            position: absolute;
+            inset: 0;
+            z-index: 2; /* Perfectly above background image element but below text content (z-10) */
+            pointer-events: none;
+            overflow: hidden;
+          }
+
+          /* SVG */
+          .premium-lines-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+          }
+
+          /* LINE STYLE */
+          .premium-line {
+            fill: none;
+            stroke: rgba(232, 220, 180, 0.75);
+            stroke-width: 2px;
+            vector-effect: non-scaling-stroke;
+            will-change: transform;
+          }
+
+          /* PREMIUM SMOOTH MOTION */
+          .line-1 {
+            animation: premiumMove1 7s ease-in-out infinite alternate;
+          }
+
+          .line-2 {
+            animation: premiumMove2 8.5s ease-in-out infinite alternate;
+          }
+
+          .line-3 {
+            animation: premiumMove3 7.5s ease-in-out infinite alternate;
+          }
+
+          /* SMOOTH LUXURY MOVEMENT */
+          @keyframes premiumMove1 {
+            from {
+              transform: translate3d(0px, 0px, 0);
+            }
+            to {
+              transform: translate3d(-65px, 28px, 0);
+            }
+          }
+
+          @keyframes premiumMove2 {
+            from {
+              transform: translate3d(0px, 0px, 0);
+            }
+            to {
+              transform: translate3d(-80px, 40px, 0);
+            }
+          }
+
+          @keyframes premiumMove3 {
+            from {
+              transform: translate3d(0px, 0px, 0);
+            }
+            to {
+              transform: translate3d(-55px, -20px, 0);
+            }
+          }
+        `}</style>
       </div>
 
-      {/* Immersive Photo Background with beautiful muted color grading.
-          Uses a stock Unsplash image (NOT actual SVSP children) so we don't
-          expose any child's likeness without consent — see privacy/safeguarding
-          note in AUDIT.md §8.
-          `fetchPriority="high"` because this is the LCP element; explicit
-          width/height prevent CLS. */}
+      {/* Immersive Photo Background with beautiful muted color grading */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=70&w=1600"
-          alt=""
-          aria-hidden="true"
-          width={1600}
-          height={900}
-          fetchPriority="high"
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=1600"
+          alt="Humanitarian care support"
           className="w-full h-full object-cover object-center opacity-45 scale-102 filter brightness-[0.7] saturate-[0.8]"
         />
         {/* Multilayer gradient overlays to integrate with header and footer seamlessly */}
@@ -131,23 +184,19 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
           >
             <img
               src={`${import.meta.env.BASE_URL}logo.png?v=3`}
-              alt="Swami Vivekanand Seva Pratishthan logo — a registered NGO in Belagavi, Karnataka"
+              alt="Swami Vivekanand Seva Pratishthan Logo"
               className="hero-logo h-[115px] w-auto max-w-full object-contain pointer-events-none select-none"
               referrerPolicy="no-referrer"
             />
           </motion.div>
 
-          {/* Epic Main Heading with balanced spacing and typography.
-              The visible headline below is decorative (gold-glow hover);
-              the actual semantic <h1> text is exposed via aria-label so
-              screen readers hear the full sentence, not 30 word nodes. */}
+          {/* Epic Main Heading with balanced spacing and typography */}
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
             className="text-4xl sm:text-6xl lg:text-7xl font-sans font-black tracking-tight leading-none text-white max-w-4xl mx-auto"
             id="hero-header-title"
-            aria-label={`${t('hero_title_accent')} ${t('hero_title_main')}`}
           >
             <span className="block text-amber-400 font-serif font-extrabold italic text-2xl sm:text-4xl lg:text-5xl mb-2 sm:mb-4">
               {t('hero_title_accent')}
@@ -187,9 +236,8 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
           >
             <button
               id="hero-cta-main"
-              type="button"
               onClick={onDonateClick}
-              className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-[#e59a18] hover:bg-[#c88210] active:scale-[0.98] text-white py-4 px-8 rounded-2xl text-sm font-black uppercase tracking-wider shadow-lg shadow-yellow-700/20 hover:shadow-yellow-700/35 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-[#e59a18] hover:bg-[#c88210] active:scale-[0.98] text-white py-4 px-8 rounded-2xl text-sm font-black uppercase tracking-wider shadow-lg shadow-yellow-700/20 hover:shadow-yellow-700/35 transition-all duration-200 cursor-pointer"
             >
               <Heart className="fill-white" size={17} />
               <span>{t('hero_cta_donate')}</span>
@@ -197,9 +245,8 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
 
             <button
               id="hero-cta-secondary"
-              type="button"
               onClick={() => onNavigate('causes')}
-              className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 active:scale-[0.98] border border-white/25 backdrop-blur-md text-white py-4 px-8 rounded-2xl text-sm font-black uppercase tracking-wider transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+              className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 active:scale-[0.98] border border-white/25 backdrop-blur-md text-white py-4 px-8 rounded-2xl text-sm font-black uppercase tracking-wider transition-all duration-200 cursor-pointer"
             >
               <Compass size={17} />
               <span>{t('hero_cta_projects')}</span>
@@ -207,23 +254,20 @@ export default function Hero({ lang, onDonateClick, onNavigate }: HeroProps) {
           </motion.div>
         </div>
 
-        {/* Scroll helper indicator at absolute bottom — now a real <button>
-            so keyboard + AT users can also trigger the scroll. */}
-        <motion.button
-          type="button"
+        {/* Scroll helper indicator at absolute bottom */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: [0.3, 0.7, 0.3] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-1 cursor-pointer bg-transparent border-0 p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 rounded-lg"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 cursor-pointer hidden sm:flex flex-col items-center gap-1"
           onClick={() => onNavigate('mission')}
           id="scroll-to-mission-helper"
-          aria-label="Scroll down to read about our mission"
         >
           <span className="text-[10px] tracking-widest uppercase font-mono text-gray-400 font-bold">
             {lang === 'EN' ? 'Scroll to explore' : lang === 'HI' ? 'नीचे स्क्रॉल करें' : 'ಅನ್ವೇಷಿಸಲು ಸ್ಕ್ರಾಲ್ ಮಾಡಿ'}
           </span>
           <ArrowDownCircle size={18} className="text-gray-400" />
-        </motion.button>
+        </motion.div>
       </div>
     </section>
   );

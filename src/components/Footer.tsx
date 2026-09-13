@@ -1,4 +1,4 @@
-import { Globe, Mail, Phone, MapPin, ShieldCheck, Shield, Facebook, Instagram } from 'lucide-react';
+import { Globe, Mail, Phone, MapPin, Heart, ShieldCheck, HelpCircle, Facebook, Youtube, Instagram } from 'lucide-react';
 import { Lang } from '../types';
 import { TRANSLATIONS } from '../data';
 
@@ -8,12 +8,10 @@ interface FooterProps {
   onDonateClick: () => void;
 }
 
-// NOTE: YouTube link removed — SVSP does not have a verified YouTube channel
-// listed in the org's `sameAs` schema. Re-add a verified URL here once the
-// organization confirms an official channel. See AUDIT.md §10.
 const SOCIAL_LINKS: { name: string; url: string; icon: React.ComponentType<{ size?: number; className?: string }> }[] = [
   { name: 'Facebook',  url: 'https://www.facebook.com/SVSPBELGAUM/',     icon: Facebook },
   { name: 'Instagram', url: 'https://www.instagram.com/svsp.belagavi/',  icon: Instagram },
+  { name: 'YouTube',   url: 'https://www.youtube.com/',                  icon: Youtube },
   { name: 'Google Maps', url: 'https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/', icon: Globe },
 ];
 
@@ -162,45 +160,11 @@ export default function Footer({ lang, onNavigate, onDonateClick }: FooterProps)
           </div>
 
           <div className="flex gap-4 text-gray-500">
-            {/* 80G scheme — link to the public-domain information page
-                rather than the previous `href="#"` placeholder that did
-                nothing on click. The Indian Income Tax Act's 80G text is
-                public; linking out is the safest option. */}
-            <a
-              href="https://incometaxindia.gov.in/Tutorials/80%20G.G.PDF"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-white transition"
-            >
-              80G Scheme
-            </a>
-            <a href="https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">Google Maps</a>
-            <button
-              type="button"
-              onClick={() => onNavigate('causes')}
-              className="hover:text-white transition bg-transparent border-0 p-0 cursor-pointer text-inherit font-inherit"
-            >
-              Our Objectives
-            </button>
+            <a href="#" className="hover:text-white transition">80G Scheme</a>
+            <a href="https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/" target="_blank" rel="noreferrer" className="hover:text-white transition">Google Maps</a>
+            <a href="#causes" className="hover:text-white transition">Our Objectives</a>
           </div>
 
-        </div>
-
-        {/* ── Child safeguarding & privacy notice ──
-            The organization works with children. This small, plain-language
-            notice makes our safeguarding stance visible on every page,
-            without exposing any child's personal information. */}
-        <div className="pt-6 border-t border-slate-900/60">
-          <div className="flex items-start gap-2.5 text-[10px] sm:text-[11px] text-gray-500 max-w-3xl mx-auto sm:mx-0">
-            <Shield size={14} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="leading-relaxed">
-              {lang === 'EN'
-                ? "Child safeguarding & privacy: photographs of children on this website are published with the consent of SVSP caretakers and contain no personally identifying information. SVSP follows CARA guidelines and does not share any child's private details publicly. Concerns about a child's welfare or image use may be reported to the trust office."
-                : lang === 'HI'
-                  ? 'बाल सुरक्षा एवं गोपनीयता: इस वेबसाइट पर बच्चों की तस्वीरें SVSP देखभालकर्ताओं की सहमति से प्रकाशित की गई हैं और इनमें कोई पहचान संबंधी जानकारी नहीं है। SVSP कारा दिशानिर्देशों का पालन करता है और किसी बच्चे की निजी जानकारी सार्वजनिक रूप से साझा नहीं करता।'
-                  : 'ಮಕ್ಕಳ ಸುರಕ್ಷತೆ ಮತ್ತು ಗೌಪ್ಯತೆ: ಈ ಜಾಲತಾಣದಲ್ಲಿರುವ ಮಕ್ಕಳ ಚಿತ್ರಗಳನ್ನು SVSP ಆರೈಕೆದಾರರ ಸಮ್ಮತಿಯೊಂದಿಗೆ ಪ್ರಕಟಿಸಲಾಗಿದೆ ಮತ್ತು ಯಾವುದೇ ವೈಯಕ್ತಿಕ ಗುರುತಿನ ಮಾಹಿತಿಯನ್ನು ಹೊಂದಿಲ್ಲ. SVSP CARA ಮಾರ್ಗಸೂಚಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ.'}
-            </p>
-          </div>
         </div>
 
       </div>

@@ -19,12 +19,6 @@ export const CustomCursor: React.FC = () => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     if (isTouchDevice) return;
 
-    // Respect reduced-motion: don't paint a decorative cursor follower
-    // for users who've asked the OS to minimize motion. The native cursor
-    // remains fully usable — we just skip installing the custom overlay.
-    const motionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (motionMQ.matches) return;
-
     setIsVisible(true);
 
     const handleMouseMove = (e: MouseEvent) => {

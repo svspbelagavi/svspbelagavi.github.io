@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Mail,
-  CheckCircle2,
-  Send,
-  Bookmark,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Mail, CheckCircle2, Send, Bookmark, AlertCircle, Loader2 } from 'lucide-react';
 import { Lang } from '../types';
 import { TRANSLATIONS } from '../data';
 
 interface NewsletterProps {
   lang: Lang;
+}
+
+const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL;
+if (!SCRIPT_URL) {
+  console.error(
+    '[Newsletter] VITE_SCRIPT_URL is not set. Newsletter sign-ups will fail silently.'
+  );
 }
 
 export default function Newsletter({ lang }: NewsletterProps) {
@@ -25,18 +25,12 @@ export default function Newsletter({ lang }: NewsletterProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!email) return;
 
-    // Validate email
+    // Quick client-side validation; the apps script will also validate.
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
     if (!emailRegex.test(email)) {
-      setError(
-        lang === 'EN'
-          ? 'Please enter a valid email address.'
-          : 'कृपया मान्य ईमेल पता दर्ज करें।'
-      );
+      setError(lang === 'EN' ? 'Please enter a valid email address.' : 'कृपया मान्य ईमेल पता दर्ज करें।');
       return;
     }
 
@@ -44,31 +38,31 @@ export default function Newsletter({ lang }: NewsletterProps) {
     setLoading(true);
 
     try {
-      // Submit newsletter subscription to Formspree
-      const response = await fetch('https://formspree.io/f/mvkoyjld', {
+      // POST to the same Google Apps Script endpoint used by the contact form.
+      // formType=newsletter lets the script route it to a separate sheet/tab.
+      const response = await fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          language: lang,
-        }),
+        redirect: 'follow',
+        body: JSON.stringify({ formType: 'newsletter', email, lang }),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Subscription failed');
+      // Some Apps Script deployments return plain text instead of JSON.
+      let ok = false;
+      try {
+        const result = await response.json();
+        ok = !!result.success;
+      } catch {
+        ok = response.ok;
       }
 
-      // Successful submission
+      if (!ok) {
+        throw new Error('Subscription failed');
+      }
+
       setIsSubscribed(true);
       setEmail('');
     } catch (err) {
       console.error('[Newsletter] subscribe failed:', err);
-
       setError(
         lang === 'EN'
           ? 'Could not subscribe right now. Please try again later.'
@@ -86,15 +80,8 @@ export default function Newsletter({ lang }: NewsletterProps) {
       className="bg-amber-700 py-16 sm:py-24 text-white relative overflow-hidden"
     >
       {/* Background circles purely for visual context */}
-      <div
-        className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-amber-800/40 pointer-events-none"
-        aria-hidden="true"
-      />
-
-      <div
-        className="absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-yellow-600/20 pointer-events-none"
-        aria-hidden="true"
-      />
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-amber-800/40 pointer-events-none" aria-hidden="true" />
+      <div className="absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-yellow-600/20 pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
 
@@ -102,11 +89,7 @@ export default function Newsletter({ lang }: NewsletterProps) {
         <div className="flex justify-center">
           <motion.div
             animate={{ y: [0, -6, 0] }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             className="p-3.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 text-yellow-300"
           >
             <Mail size={32} />
@@ -120,7 +103,6 @@ export default function Newsletter({ lang }: NewsletterProps) {
           >
             {t('newsletter_title')}
           </h2>
-
           <p className="text-amber-100 text-xs sm:text-sm leading-relaxed font-medium">
             {t('newsletter_subtitle')}
           </p>
@@ -138,20 +120,12 @@ export default function Newsletter({ lang }: NewsletterProps) {
                 className="flex flex-col sm:flex-row items-stretch justify-center gap-2"
               >
                 <div className="relative flex-1">
-                  <span
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-200"
-                    aria-hidden="true"
-                  >
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-200" aria-hidden="true">
                     <Bookmark size={15} />
                   </span>
-
-                  <label
-                    htmlFor="newsletter-email-field"
-                    className="sr-only"
-                  >
+                  <label htmlFor="newsletter-email-field" className="sr-only">
                     {t('newsletter_email_label')}
                   </label>
-
                   <input
                     type="email"
                     required
@@ -159,8 +133,7 @@ export default function Newsletter({ lang }: NewsletterProps) {
                     placeholder={t('newsletter_email_label')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                    className="w-full bg-amber-850/80 border border-amber-600 rounded-xl py-3 pl-11 pr-4 text-xs font-semibold placeholder-amber-450 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700 text-white disabled:opacity-60"
+                    className="w-full bg-amber-850/80 border border-amber-600 rounded-xl py-3 pl-11 pr-4 text-xs font-semibold placeholder-amber-450 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700 text-white"
                   />
                 </div>
 
@@ -170,15 +143,7 @@ export default function Newsletter({ lang }: NewsletterProps) {
                   disabled={loading}
                   className="bg-[#e59a18] hover:bg-[#c88210] disabled:bg-slate-400 text-white py-3 px-6 rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer active:scale-97 flex items-center justify-center gap-2 min-w-[120px] font-sans"
                 >
-                  {loading ? (
-                    <Loader2
-                      size={12}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Send size={12} />
-                  )}
-
+                  {loading ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
                   <span>{t('newsletter_subscribe')}</span>
                 </button>
               </motion.form>
@@ -189,20 +154,11 @@ export default function Newsletter({ lang }: NewsletterProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 className="p-5 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl flex items-center gap-3.5 text-left"
               >
-                <CheckCircle2
-                  className="text-yellow-400 shrink-0"
-                  size={24}
-                />
-
+                <CheckCircle2 className="text-yellow-400 shrink-0" size={24} />
                 <div>
                   <h4 className="text-sm font-black tracking-tight">
-                    {lang === 'EN'
-                      ? 'Registration Registered'
-                      : lang === 'HI'
-                        ? 'पंजीकरण सफल हुआ'
-                        : 'ನೋಂದಣಿ ಯಶಸ್ವಿಯಾಗಿದೆ'}
+                    {lang === 'EN' ? 'Registration Registered' : lang === 'HI' ? 'पंजीकरण सफल हुआ' : 'ನೋಂದಣಿ ಯಶಸ್ವಿಯಾಗಿದೆ'}
                   </h4>
-
                   <p className="text-xs text-amber-100 leading-normal font-sans font-medium">
                     {t('newsletter_success')}
                   </p>
@@ -217,15 +173,12 @@ export default function Newsletter({ lang }: NewsletterProps) {
               aria-live="polite"
               className="mt-3 flex items-center justify-center gap-2 text-xs font-semibold text-amber-50 bg-red-900/40 border border-red-400/30 rounded-xl py-2 px-3"
             >
-              <AlertCircle
-                size={12}
-                className="shrink-0"
-              />
-
+              <AlertCircle size={12} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
         </div>
+
       </div>
     </section>
   );
