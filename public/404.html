@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Page Not Found — Swami Vivekanand Seva Pratishthan</title>
+    <!--
+      GitHub Pages serves this file for any URL that doesn't match an existing file.
+      The script below is the standard SPA fallback trick (see vitejs/docs) — it
+      preserves the originally-requested path and hands it back to the client-side
+      router via a `?/` search prefix, which is then decoded in index.html.
+    -->
+    <script>
+      (function (l) {
+        var segments = l.pathname.split('/').slice(0, 1).join('/') + '/?/';
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          segments +
+          l.pathname.slice(1).replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      })(window.location);
+    </script>
+  </head>
+  <body>Redirecting…</body>
+</html>

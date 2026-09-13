@@ -1,0 +1,11 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Admin/login and dashboard are not for public indexing.
+# (404.html already serves a 404 status for these paths, but
+# this rule prevents well-behaved crawlers from even requesting them.)
+Disallow: /admin
+Disallow: /dashboard
+
+Sitemap: https://svspbelagavi.org/sitemap.xml

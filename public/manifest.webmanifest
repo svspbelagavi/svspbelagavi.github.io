@@ -1,0 +1,48 @@
+{
+  "name": "Swami Vivekanand Seva Pratishthan (SVSP)",
+  "short_name": "SVSP Belagavi",
+  "description": "A registered humanitarian NGO in Belagavi, Karnataka, India, providing shelter, education, and healthcare to orphaned and underprivileged children since 1982.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0c0a08",
+  "theme_color": "#0c0a08",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["nonprofits", "education", "social-services"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Donate (80G)",
+      "short_name": "Donate",
+      "description": "Make a tax-deductible donation to SVSP",
+      "url": "/#donation-impact"
+    },
+    {
+      "name": "Adoption Enquiry",
+      "short_name": "Adopt",
+      "description": "Start a CARA-aligned adoption enquiry with SVSP",
+      "url": "/#contact-us"
+    },
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "description": "Address, phone, email, and contact form for SVSP Belagavi",
+      "url": "/#contact-us"
+    }
+  ]
+}

@@ -1,0 +1,316 @@
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import Mission from './components/Mission';
+import Causes from './components/Causes';
+import DonationImpact from './components/DonationImpact';
+import NewsSection from './components/NewsSection';
+import EventsSection from './components/EventsSection';
+import Testimonials from './components/Testimonials';
+import FacilitiesAndHealthcare from './components/FacilitiesAndHealthcare';
+import Newsletter from './components/Newsletter';
+import ContactSection from './components/ContactSection';
+import Footer from './components/Footer';
+import FacebookFeed from './components/FacebookFeed';
+import KeyDonors from './components/KeyDonors';
+import { Lang } from './types';
+import { CustomCursor } from './components/ui/CustomCursor';
+import FadeInSection from './components/ui/FadeInSection';
+import { useDocumentMeta } from './hooks/useDocumentMeta';
+
+/* ──────────────────────────────────────────────────────────────────────
+   Lazy-loaded heavy chunks
+   ──────────────────────────────────────────────────────────────────────
+   These three modules together were ~250KB of eagerly-loaded JS that most
+   users never interact with on a typical visit. They are now split into
+   separate chunks and only fetched when actually needed:
+
+   - AdoptModal:  Multi-step form + PhoneInput + country/state data +
+                  BouncingDots. Only loaded when the user opens the modal.
+   - Aurora:      WebGL shader background (OGL + @paper-design/shaders).
+                  Only loaded on desktop + dark theme + no reduced-motion.
+   ────────────────────────────────────────────────────────────────────── */
+const AdoptModal = lazy(() => import('./components/AdoptModal'));
+const Aurora = lazy(() => import('./components/ui/Aurora'));
+
+export default function App() {
+  const [lang, setLang] = useState<Lang>('EN');
+  const [activeSection, setActiveSection] = useState<string>('hero');
+  const [isAdoptOpen, setIsAdoptOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // ── Show the immersive Aurora WebGL background only when:
+  //    1. The user has NOT requested reduced motion, AND
+  //    2. The viewport is desktop (>=768px) — phones/tablets get a static fallback.
+  //    Low-power devices (Redmi 10, Realme C-series) shouldn't pay the WebGL cost.
+  const [showAurora, setShowAurora] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px) and (prefers-reduced-motion: no-preference)');
+    const update = () => setShowAurora(mq.matches);
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
+
+  useEffect(() => {
+    const handleScrollProgress = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        const progress = (window.scrollY / totalHeight) * 100;
+        setScrollProgress(progress);
+      }
+    };
+    window.addEventListener('scroll', handleScrollProgress);
+    return () => window.removeEventListener('scroll', handleScrollProgress);
+  }, []);
+
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // NOTE: The previous `handleGlobalClick` useEffect that hid the navbar when
+  // clicking any `.rounded-xl`/`.rounded-2xl`/`.rounded-3xl` element has been
+  // REMOVED. That behavior silently broke navigation on every card click —
+  // the most damaging UX bug in the audit. The navbar should only hide on
+  // explicit scroll-down OR modal-open, not on card clicks.
+
+  // Hide the navbar only while the adopt modal is fully open (no fake timeout).
+  const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+  useEffect(() => {
+    setIsNavbarVisible(!isAdoptOpen);
+  }, [isAdoptOpen]);
+
+  const handleOverlayScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    const lastScroll = (e.currentTarget as any)._lastScrollTop || 0;
+
+    if (scrollTop > lastScroll && scrollTop > 50) {
+      setIsNavbarVisible(false);
+    } else if (scrollTop < lastScroll) {
+      setIsNavbarVisible(true);
+    }
+
+    (e.currentTarget as any)._lastScrollTop = scrollTop;
+  };
+
+  // Smooth scroll handler with offset for sticky header
+  const handleNavigate = (sectionId: string) => {
+    setActiveSection(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerOffset = 70;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Immediate donate trigger with parameter pre-fills
+  const triggerDonate = () => {
+    document.getElementById('donation-impact')?.scrollIntoView({
+      behavior: 'smooth'
+    });
+  };
+
+  // Track scroll position to update active navigation state
+  useEffect(() => {
+    const handleScrollDetect = () => {
+      const sections = ['hero', 'mission', 'causes', 'news', 'events', 'footer'];
+      const scrollPos = window.scrollY + 120; // threshold offset
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPos >= top && scrollPos < top + height) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollDetect);
+    return () => window.removeEventListener('scroll', handleScrollDetect);
+  }, []);
+
+  // Keep <title>, meta description, and <html lang> in sync with the active
+  // section + selected UI language. See src/hooks/useDocumentMeta.ts.
+  useDocumentMeta(activeSection, lang);
+
+  return (
+    <div className="font-sans text-text-primary bg-transparent selection:bg-amber-800 selection:text-white min-h-screen flex flex-col justify-between">
+      {/* Skip to main content — accessibility (WCAG 2.4.1) */}
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
+
+      {/* Custom follower cursor effect */}
+      <CustomCursor />
+
+      {/* Scroll Progress Indicator (decorative — hidden from AT) */}
+      <div
+        className="fixed top-0 left-0 right-0 h-[3.5px] bg-amber-500/10 z-[1001] pointer-events-none"
+        aria-hidden="true"
+      >
+        <div
+          className="h-full bg-gradient-to-r from-teal-500 via-amber-500 to-orange-500 transition-all duration-100 ease-out"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
+
+      {/* Immersive Global Animated Aurora Background Canvas — desktop + reduced-motion OK only.
+          Lazy-loaded so OGL doesn't end up in the main bundle. */}
+      {theme === 'dark' && showAurora && (
+        <Suspense fallback={null}>
+          <div
+            className="fixed inset-0 pointer-events-none -z-50 overflow-hidden opacity-35 select-none transition-opacity duration-500"
+            aria-hidden="true"
+          >
+            <Aurora
+              colorStops={["#EAB308", "#10B981", "#F97316"]}
+              amplitude={1}
+              blend={0.46}
+            />
+          </div>
+        </Suspense>
+      )}
+
+      {/* Ambient Aesthetic Floating Orbs (decorative — hidden from AT) */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-40 overflow-hidden select-none"
+        aria-hidden="true"
+      >
+        {/* Orb 1: Top Right, Amber/Yellow */}
+        <div className="absolute top-[10%] -right-[10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-amber-400/10 dark:bg-amber-600/15 blur-[80px] sm:blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+        {/* Orb 2: Middle Left, Teal */}
+        <div className="absolute top-[45%] -left-[15%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] rounded-full bg-teal-300/10 dark:bg-teal-500/10 blur-[90px] sm:blur-[140px] animate-pulse" style={{ animationDuration: '18s' }} />
+        {/* Orb 3: Bottom Right, Golden Amber */}
+        <div className="absolute bottom-[15%] -right-[10%] w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#e59a18]/5 dark:bg-[#e59a18]/10 blur-[80px] sm:blur-[110px] animate-pulse" style={{ animationDuration: '15s' }} />
+      </div>
+
+      {/* Premium Sticky Navigation Bar */}
+      <Navbar
+        lang={lang}
+        setLang={setLang}
+        theme={theme}
+        setTheme={setTheme}
+        onDonateClick={() => triggerDonate()}
+        onAdoptClick={() => setIsAdoptOpen(true)}
+        activeSection={activeSection}
+        onNavigate={handleNavigate}
+        isNavbarVisible={isNavbarVisible}
+      />
+
+      {/* Main Single Page Sections flow — carries id="main-content" for the skip link */}
+      <main id="main-content" className="flex-1">
+        {/* 1. Full-screen Immersive Hero Section */}
+        <Hero
+          lang={lang}
+          onDonateClick={() => triggerDonate()}
+          onNavigate={handleNavigate}
+        />
+
+      <div className="relative">
+
+  <div className="relative z-10">
+        {/* 2. Storytelling / Mission Stat counters Section */}
+        <FadeInSection>
+          <Mission lang={lang} />
+        </FadeInSection>
+
+        {/* 3. NGO Causes with filter tabs and details drawers */}
+        <FadeInSection>
+          <Causes
+            lang={lang}
+            onDonateClick={() => triggerDonate()}
+          />
+        </FadeInSection>
+        {/* 3b. Live Facebook page feed */}
+        <FadeInSection>
+          <FacebookFeed lang={lang} />
+        </FadeInSection>
+        {/* 4. Interactive Donation Impact board */}
+        <FadeInSection>
+          <section id="donation-impact">
+            <DonationImpact
+              lang={lang}
+              onDonateClick={() => triggerDonate()}
+            />
+          </section>
+        </FadeInSection>
+
+        {/* 5. Clean News / Publications grids */}
+        <FadeInSection>
+          <NewsSection lang={lang} />
+        </FadeInSection>
+
+        {/* 6. Solidaire Schedule Calendar Timelines */}
+        <FadeInSection>
+          <EventsSection lang={lang} />
+        </FadeInSection>
+
+        {/* 6b. Facilities & Healthcare detailed grid */}
+        <FadeInSection>
+          <FacilitiesAndHealthcare lang={lang} />
+        </FadeInSection>
+
+        {/* 7. Humans Story citation Carousels */}
+        <FadeInSection>
+          <Testimonials lang={lang} />
+        </FadeInSection>
+
+        {/* Key Donors */}
+        <FadeInSection>
+          <KeyDonors lang={lang} />
+        </FadeInSection>
+
+        {/* Contact form, Map and interactive phone connections */}
+        <FadeInSection>
+          <ContactSection lang={lang} />
+        </FadeInSection>
+        </div>
+      </div>
+        {/* 8. Minimal Newsletter subscriber field */}
+        <FadeInSection>
+          <Newsletter lang={lang} />
+        </FadeInSection>
+      </main>
+
+      {/* 9. Premium Grand-Ducal certified Footer */}
+      <Footer
+        lang={lang}
+        onNavigate={handleNavigate}
+        onDonateClick={() => triggerDonate()}
+      />
+
+      {/* Fully styled pre-registration CARA adoption modal.
+          Only rendered (and only the chunk is fetched) when the user
+          actually opens it. */}
+      {isAdoptOpen && (
+        <Suspense fallback={null}>
+          <AdoptModal
+            isOpen={isAdoptOpen}
+            onClose={() => setIsAdoptOpen(false)}
+            lang={lang}
+            onScroll={handleOverlayScroll}
+          />
+        </Suspense>
+      )}
+    </div>
+  );
+}

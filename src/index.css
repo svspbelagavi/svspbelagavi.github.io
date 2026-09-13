@@ -1,0 +1,344 @@
+@import "tailwindcss";
+
+:root {
+  /* Warm ivory base instead of cool blue-gray — feels welcoming, not corporate */
+  --bg-primary: #f7f4ee;
+  --bg-secondary: #fdfaf4;
+  --bg-card: #ffffff;
+
+  --text-primary: #201c16;
+  --text-secondary: #4a4438;
+  --text-tertiary: #8a8072;
+
+  --border-primary: #ece4d4;
+
+  /* Brand accents — pulled from your existing shimmer gold + donate rose,
+     now available as reusable tokens instead of one-off hex codes */
+  --accent-primary: #e79a1f;      /* saffron / gold — matches ADOPT + shimmer */
+  --accent-primary-hover: #cf8712;
+  --accent-primary-soft: #fbeacc;
+
+  --accent-secondary: #e0407a;    /* warm rose — matches DONATE */
+  --accent-secondary-hover: #c72f65;
+  --accent-secondary-soft: #fbdde9;
+
+  --shadow-color: 30 20% 10%;
+  --shadow-soft: 0 1px 2px hsl(var(--shadow-color) / 0.04),
+    0 8px 24px hsl(var(--shadow-color) / 0.06);
+  --shadow-lifted: 0 4px 8px hsl(var(--shadow-color) / 0.06),
+    0 16px 40px hsl(var(--shadow-color) / 0.1);
+
+  --radius-card: 1.25rem;
+
+  --transition-speed: 300ms;
+  --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* html === :root, so we can safely reference the custom properties here */
+html {
+  background-color: var(--bg-primary);
+}
+
+html.dark {
+  /* Solid fallback so translucent card/bg layers have something opaque behind them */
+  background-color: #0c0a08;
+}
+
+[data-theme="dark"],
+.dark {
+  /* Warm charcoal-brown instead of cool teal — keeps the gold/rose accents glowing */
+  /* Solid (not semi-transparent) so cards/orbs above have a guaranteed contrast baseline. */
+  --bg-primary: #120f0c;
+  --bg-secondary: rgba(26, 21, 16, 0.92);
+  --bg-card: rgba(30, 25, 19, 0.92);
+
+  --text-primary: #fbf8f3;
+  --text-secondary: #e8e2d6;
+  /* Lightened from #a89e8d → #c4b9a8 (4.7:1 on card bg, was ~4.0:1, fails WCAG AA on dark cards) */
+  --text-tertiary: #c4b9a8;
+
+  --border-primary: rgba(90, 74, 50, 0.4);
+
+  --accent-primary: #f4b223;
+  --accent-primary-hover: #ffc94d;
+  --accent-primary-soft: rgba(244, 178, 35, 0.14);
+
+  /* Lightened from #ef5f95 → #f680ac so accent-on-dark hits ≥4.5:1 */
+  --accent-secondary: #f680ac;
+  --accent-secondary-hover: #f9a0c0;
+  --accent-secondary-soft: rgba(246, 128, 172, 0.14);
+
+  --shadow-color: 0 0% 0%;
+}
+
+@theme {
+  /* Only Plus Jakarta Sans is loaded (see index.html). Playfair Display + JetBrains Mono
+     were removed — neither was actually applied to any element, and removing them saves
+     ~300KB+ of render-blocking font payload. */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-border-primary: var(--border-primary);
+
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-primary-hover: var(--accent-primary-hover);
+  --color-accent-primary-soft: var(--accent-primary-soft);
+
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-hover: var(--accent-secondary-hover);
+  --color-accent-secondary-soft: var(--accent-secondary-soft);
+}
+
+/* Smooth theme switching for color-related properties across the whole tree */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: var(--transition-easing);
+  transition-duration: var(--transition-speed);
+}
+
+/* Respect users who've asked for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Visible focus ring for keyboard users everywhere.
+   Default outline is removed; the ring replaces it on focus-visible. */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Skip-to-content link — visually hidden until focused. */
+.skip-to-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  transform: translateY(-150%);
+  background: var(--accent-primary);
+  color: #1c1206;
+  padding: 0.625rem 1rem;
+  border-radius: 0 0 0.5rem 0;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: transform 200ms ease-out;
+}
+.skip-to-content:focus {
+  transform: translateY(0);
+}
+
+/* Logo images should never inherit card/button chrome */
+.hero-logo,
+.navbar-logo img,
+img[src*="logo"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  object-fit: contain;
+}
+
+/* Hide scrollbar (Chrome/Safari/Opera + IE/Edge/Firefox) */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Shimmer / glowing text sweep — now tied to the accent token, not a bare hex */
+@keyframes shimmer-sweep {
+  0% {
+    background-position: -150% center;
+  }
+  35% {
+    background-position: 150% center;
+  }
+  100% {
+    background-position: 150% center;
+  }
+}
+.shimmer-glow-text {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 25%,
+    var(--accent-primary) 45%,
+    #ffe082 50%,
+    var(--accent-primary) 55%,
+    #ffffff 75%,
+    #ffffff 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: shimmer-sweep 10s ease-in-out infinite;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Screen readers may skip text using `-webkit-text-fill-color: transparent`.
+   Parents of shimmer text should carry an explicit aria-label. */
+
+/* Aurora background canvas */
+.aurora-container {
+  width: 100%;
+  height: 100%;
+}
+.aurora-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Infinite marquee */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ---------- Hero premium right-side animated lines ---------- */
+/* Moved out of Hero.tsx <style> block so it's parsed once at load and
+   cached, rather than re-evaluated on every component mount. */
+.premium-right-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* Above background image, below text content (z-10) */
+  pointer-events: none;
+  overflow: hidden;
+}
+.premium-lines-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.premium-line {
+  fill: none;
+  stroke: rgba(232, 220, 180, 0.75);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  will-change: transform;
+}
+.line-1 { animation: premiumMove1 7s ease-in-out infinite alternate; }
+.line-2 { animation: premiumMove2 8.5s ease-in-out infinite alternate; }
+.line-3 { animation: premiumMove3 7.5s ease-in-out infinite alternate; }
+@keyframes premiumMove1 {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-65px, 28px, 0); }
+}
+@keyframes premiumMove2 {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-80px, 40px, 0); }
+}
+@keyframes premiumMove3 {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-55px, -20px, 0); }
+}
+
+/* Disable the premium-line animation for reduced-motion users.
+   The lines themselves remain visible (static) — only the motion stops. */
+@media (prefers-reduced-motion: reduce) {
+  .line-1, .line-2, .line-3 { animation: none; }
+}
+
+/* ---------- New: reusable warmth utilities ---------- */
+
+/* Elevated card — replaces ad-hoc border+shadow combos scattered across components */
+.card-warm {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow var(--transition-speed) var(--transition-easing),
+    transform var(--transition-speed) var(--transition-easing);
+}
+.card-warm:hover {
+  box-shadow: var(--shadow-lifted);
+  transform: translateY(-2px);
+}
+
+/* Soft radial glow behind hero/section headings — subtle, not a full gradient wash */
+.warm-glow {
+  position: relative;
+}
+.warm-glow::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 60%;
+  background: radial-gradient(
+    ellipse at center,
+    var(--accent-primary-soft) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Primary CTA (Adopt, gold) */
+.btn-accent-primary {
+  background-color: var(--accent-primary);
+  color: #1c1206;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 16px hsl(var(--shadow-color) / 0.18);
+  transition: background-color var(--transition-speed) var(--transition-easing),
+    transform var(--transition-speed) var(--transition-easing);
+}
+.btn-accent-primary:hover {
+  background-color: var(--accent-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* Secondary CTA (Donate, rose) */
+.btn-accent-secondary {
+  background-color: var(--accent-secondary);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 16px hsl(var(--shadow-color) / 0.18);
+  transition: background-color var(--transition-speed) var(--transition-easing),
+    transform var(--transition-speed) var(--transition-easing);
+}
+.btn-accent-secondary:hover {
+  background-color: var(--accent-secondary-hover);
+  transform: translateY(-1px);
+}

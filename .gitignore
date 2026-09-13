@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+
+# Environment files — secrets never get committed
+.env
+.env.local
+.env.production
+.env.development
+# .env.example IS committed (template with empty values)
+!.env.example
