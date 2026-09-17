@@ -12,7 +12,6 @@ const SOCIAL_LINKS: { name: string; url: string; icon: React.ComponentType<{ siz
   { name: 'Facebook',  url: 'https://www.facebook.com/SVSPBELGAUM/',     icon: Facebook },
   { name: 'Instagram', url: 'https://www.instagram.com/svsp.belagavi/',  icon: Instagram },
   { name: 'YouTube',   url: 'https://www.youtube.com/',                  icon: Youtube },
-  { name: 'Google Maps', url: 'https://www.google.com/maps/place/Swami+Vivekanand+Seva+Pratishthan/', icon: Globe },
 ];
 
 export default function Footer({ lang, onNavigate, onDonateClick }: FooterProps) {
